@@ -2,11 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-// Only load dotenv in local development (Vercel uses environment variables)
-if (!process.env.VERCEL) {
-    require('dotenv').config();
-}
-const serverless = require('serverless-http');
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -194,40 +190,23 @@ ${query}
 });
 
 
-// Handle uncaught exceptions to prevent crashes
-process.on('uncaughtException', (error) => {
-    console.error('Uncaught Exception:', error);
+// Start the server
+const server = app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+// Graceful shutdown
+process.on('SIGTERM', () => {
+    console.log('SIGTERM signal received: closing HTTP server');
+    server.close(() => {
+        console.log('HTTP server closed');
+    });
 });
 
-// Start server for local development
-if (require.main === module && !process.env.VERCEL) {
-    const server = app.listen(PORT, (err) => {
-        if (err) {
-            console.error('Error starting server:', err);
-            process.exit(1);
-        }
-        console.log(`Running on: http://localhost:${PORT}`);
+process.on('SIGINT', () => {
+    console.log('SIGINT signal received: closing HTTP server');
+    server.close(() => {
+        console.log('HTTP server closed');
+        process.exit(0);
     });
-    
-    process.on('SIGTERM', () => {
-        console.log('SIGTERM signal received: closing HTTP server');
-        server.close(() => {
-            console.log('HTTP server closed');
-        });
-    });
-    
-    process.on('SIGINT', () => {
-        console.log('SIGINT signal received: closing HTTP server');
-        server.close(() => {
-            console.log('HTTP server closed');
-            process.exit(0);
-        });
-    });
-}
-
-// Export serverless handler for Vercel (always export, Vercel will use it)
-module.exports = serverless(app);
+});
