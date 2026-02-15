@@ -2,7 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-require('dotenv').config();
+// Only load dotenv in local development (Vercel uses environment variables)
+if (!process.env.VERCEL) {
+    require('dotenv').config();
+}
 const serverless = require('serverless-http');
 
 const app = express();
@@ -200,13 +203,8 @@ process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
-// Export for Vercel serverless (conditional export)
-let handler;
-if (process.env.VERCEL) {
-    // In Vercel, export the serverless handler
-    handler = serverless(app);
-} else {
-    // Local development - start the server
+// Start server for local development
+if (require.main === module && !process.env.VERCEL) {
     const server = app.listen(PORT, (err) => {
         if (err) {
             console.error('Error starting server:', err);
@@ -215,7 +213,6 @@ if (process.env.VERCEL) {
         console.log(`Running on: http://localhost:${PORT}`);
     });
     
-    // Keep the process alive
     process.on('SIGTERM', () => {
         console.log('SIGTERM signal received: closing HTTP server');
         server.close(() => {
@@ -230,10 +227,7 @@ if (process.env.VERCEL) {
             process.exit(0);
         });
     });
-    
-    // Also export serverless handler for compatibility
-    handler = serverless(app);
 }
 
-// Export for Vercel serverless
-module.exports = handler;
+// Export serverless handler for Vercel (always export, Vercel will use it)
+module.exports = serverless(app);
