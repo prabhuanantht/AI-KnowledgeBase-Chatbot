@@ -101,9 +101,12 @@ PORT=3000
 API_KEY=your_context_api_key_here
 KNOWLEDGE_BASE_ID=your_default_kb_id_here
 GEMINI_API_KEY=your_gemini_api_key_here
+FRONTEND_URL=http://localhost:5173
 ```
 
 Replace the placeholder values with your actual API keys. The `KNOWLEDGE_BASE_ID` should be the ID of whichever knowledge base you want to query by default when chatting.
+
+**Note:** `FRONTEND_URL` is optional for local development. For production/Vercel, set it to your frontend URL (comma-separated for multiple origins).
 
 ## Running the App
 
@@ -228,6 +231,9 @@ vercel
 - `API_KEY` - Your Context API key
 - `KNOWLEDGE_BASE_ID` - Your default knowledge base ID
 - `GEMINI_API_KEY` - Your Google Gemini API key
+- `FRONTEND_URL` - Your frontend URL(s), comma-separated if multiple (e.g., `https://your-frontend.vercel.app`)
+
+**Note:** The CORS configuration will automatically allow any `.vercel.app` subdomain, but it's recommended to set `FRONTEND_URL` explicitly for production.
 
 The backend will be available at `https://your-project.vercel.app/api/*`
 
