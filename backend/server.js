@@ -12,6 +12,11 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 const CONTEXT_API_BASE_URL = 'https://backend.vgvishesh.com';
 
 
@@ -28,7 +33,7 @@ app.get('/api/knowledgebase', async (req, res) => {
             headers: {
                 'x-api-key': apiKey
             },
-            timeout: 8000
+            timeout: 10000 // 10 seconds
         });
         res.json(response.data);
     } catch (error) {
@@ -126,7 +131,8 @@ app.post('/api/chat', async (req, res) => {
                 headers: {
                     'x-api-key': apiKey,
                     'Content-Type': 'application/json'
-                }
+                },
+                timeout: 15000 // 15 seconds timeout
             }
         );
 
@@ -156,8 +162,13 @@ Question:
 ${query}
         `;
 
-
-        const result = await model.generateContent(prompt);
+        // Add timeout for Gemini API call (20 seconds)
+        const generateContentPromise = model.generateContent(prompt);
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Gemini API timeout after 20 seconds')), 20000)
+        );
+        
+        const result = await Promise.race([generateContentPromise, timeoutPromise]);
         const answer = result.response.text();
 
 
@@ -165,9 +176,17 @@ ${query}
         return res.json({ answer });
 
     } catch (error) {
-
-        console.error(error);
-        return res.status(500).json({ error: "Internal server error" });
+        console.error("Chat error:", error.message);
+        
+        // Return more specific error messages
+        if (error.message.includes('timeout')) {
+            return res.status(504).json({ error: "Request timeout. Please try again." });
+        }
+        if (error.message.includes('Missing API Keys')) {
+            return res.status(500).json({ error: "Server configuration error." });
+        }
+        
+        return res.status(500).json({ error: error.message || "Internal server error" });
     }
 });
 
