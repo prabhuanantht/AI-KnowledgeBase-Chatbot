@@ -8,18 +8,8 @@ const serverless = require('serverless-http');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Simple CORS configuration
-const corsOptions = {
-    origin: [
-        process.env.FRONTEND_URL,
-        'http://localhost:5173' // For local development
-    ],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key']
-};
-
-app.use(cors(corsOptions));
+// Allow all CORS - simple solution
+app.use(cors());
 app.use(express.json());
 
 const CONTEXT_API_BASE_URL = 'https://backend.vgvishesh.com';
