@@ -8,39 +8,19 @@ const serverless = require('serverless-http');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// CORS configuration - allow frontend origin(s)
-const allowedOrigins = process.env.FRONTEND_URL 
-    ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
-    : ['http://localhost:5173', 'http://localhost:3000']; // Default local dev origins
-
+// Simple CORS configuration
 const corsOptions = {
-    origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps, Postman, or server-to-server)
-        if (!origin) return callback(null, true);
-        
-        // Check if origin is in allowed list
-        if (allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, true);
-        } else {
-            // For Vercel deployments, also allow any vercel.app subdomain
-            if (origin.includes('.vercel.app')) {
-                callback(null, true);
-            } else {
-                callback(new Error('Not allowed by CORS'));
-            }
-        }
-    },
+    origin: [
+        process.env.FRONTEND_URL,
+        'http://localhost:5173' // For local development
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
-    exposedHeaders: ['Content-Type']
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key']
 };
 
 app.use(cors(corsOptions));
 app.use(express.json());
-
-// Explicitly handle OPTIONS requests for preflight (important for serverless)
-app.options('*', cors(corsOptions));
 
 const CONTEXT_API_BASE_URL = 'https://backend.vgvishesh.com';
 
